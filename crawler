@@ -5,16 +5,10 @@ mail: ulaszewski.maciej@gmail.com
 github: https://github.com/ulaszewskim
 """
 
+import os.path
 from time import sleep, localtime, strftime, time
 from selenium import webdriver
 import pandas as pd
-
-
-url = 'https://csgo500.com'
-xp = "//section[@id='content-game']//div[100]"
-
-#color - list of color assigned to number
-#for example - 0 is gold, 1 is blue etc.
 
 
 def get_num(text):
@@ -29,45 +23,75 @@ def get_num(text):
         num = num[:2]
     return int(num)
 
-def update_queue(queue, color):
-    colors = ['black', 'red', 'blue', 'gold']
-    for a in colors:
-        queue[a] += 1
-    queue[color] = 0
-    return queue
 
 def get_queue():
-    df = pd.read_csv('data.txt', delimiter=';',header=0)
-    if df.shape[0] == 0:
-        queue = {'black': 0,
-                 'red': 0,
-                 'blue': 0,
-                 'gold': 0
+    '''
+    create queue dict
+    if exists - loads history from data.txt
+    if not, starts with '?'
+    and starts counting when color appears
+    '''
+    if not os.path.isfile('data.txt'):
+        queue = {'black': '?',
+                 'red': '?',
+                 'blue': '?',
+                 'gold': '?'
         }
     else:
-        size = int(df.shape[0]) - 1
-    
-        last_black = int(df.loc[df['color'] == 'black'].iloc[-1].name)
-        last_red = int(df.loc[df['color'] == 'red'].iloc[-1].name)
-        last_blue = int(df.loc[df['color'] == 'blue'].iloc[-1].name)
-        last_gold = int(df.loc[df['color'] == 'gold'].iloc[-1].name)
-    
-        last_black = size - last_black
-        last_red = size - last_red
-        last_blue = size - last_blue
-        last_gold = size - last_gold
-    
-        queue = {'black': last_black,
-                 'red': last_red,
-                 'blue': last_blue,
-                 'gold': last_gold
-                }
+        df = pd.read_csv('data.txt', delimiter=';', header=0)
+        if df.shape[0] == 0:
+            queue = {'black': '?',
+                     'red': '?',
+                     'blue': '?',
+                     'gold': '?'
+            }
+        else:
+            size = int(df.shape[0]) - 1
+        
+            last_black = int(df.loc[df['color'] == 'black'].iloc[-1].name)
+            last_red = int(df.loc[df['color'] == 'red'].iloc[-1].name)
+            last_blue = int(df.loc[df['color'] == 'blue'].iloc[-1].name)
+            last_gold = int(df.loc[df['color'] == 'gold'].iloc[-1].name)
+        
+            last_black = size - last_black
+            last_red = size - last_red
+            last_blue = size - last_blue
+            last_gold = size - last_gold
+
+            queue = {'black': last_black,
+                     'red': last_red,
+                     'blue': last_blue,
+                     'gold': last_gold
+                    }
 
     return queue
 
+
+def update_queue(queue, color):
+    '''
+    update value in queue with specified color
+    queue - dict from get_queue()
+    color - name of color ['black', 'red', 'blue', 'gold']
+    '''
+    colors = ['black', 'red', 'blue', 'gold']
+    for a in colors:
+        try:
+            queue[a] += 1
+        except TypeError:
+            pass
+    queue[color] = 0
+
+    return queue
+
+
 #CALL VARIABLES
+url = 'https://csgo500.com'
+xp = "//section[@id='content-game']//div[100]"
 hsh = None
-queue=get_queue()
+queue = get_queue()
+
+#color - list of colors assigned to numbers
+#for example - 0 is gold, 1 is blue etc.
 color = ['gold','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue']
 
 #MAIN FUNCTION
@@ -84,8 +108,11 @@ while True:
         with open('log.txt', 'a') as file:
             file.write('{};{};{};{}\n'.format(hsh, int(time()), num, color[num]))
         queue = update_queue(queue, color[num])
-        print(strftime("%Y-%m-%d %H:%M:%S", localtime()), num, color[num], end="")
-        print('    Turns since last: black: {}, red: {}, blue: {}, gold: {}'.format(queue['black'], queue['red'], queue['blue'], queue['gold']))
+        print(strftime("%Y-%m-%d %H:%M:%S  ", localtime()), end='')
+        print(str(num) + ' '*(3-len(str(num))), end='')
+        print(color[num] + ' '*(7-len(color[num])), end='')
+        print('Rolls since last: black: {}, red: {}, blue: {}, gold: {}'.format(queue['black'], queue['red'], queue['blue'], queue['gold']))
+        sleep(8)
     else:
         sleep(8)
 
