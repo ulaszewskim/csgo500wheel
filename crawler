@@ -97,6 +97,8 @@ color = ['gold','blue','black','red','black','red','black','red','black','blue',
 #MAIN FUNCTION
 chromeOptions = webdriver.ChromeOptions()
 chromeOptions.add_argument('headless')
+# chromeOptions.add_argument("--disable-logging")
+chromeOptions.add_argument('log-level=3')
 browser = webdriver.Chrome(chrome_options=chromeOptions)
 browser.get(url)
 while True:
