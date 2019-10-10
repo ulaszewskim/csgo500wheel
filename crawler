@@ -6,9 +6,10 @@ github: https://github.com/ulaszewskim
 """
 
 import os.path
+import pandas as pd
+from playsound import playsound
 from time import sleep, localtime, strftime, time
 from selenium import webdriver
-import pandas as pd
 
 
 def get_num(text):
@@ -114,6 +115,9 @@ while True:
         print(str(num) + ' '*(3-len(str(num))), end='')
         print(color[num] + ' '*(7-len(color[num])), end='')
         print('Rolls since last: black: {}, red: {}, blue: {}, gold: {}'.format(queue['black'], queue['red'], queue['blue'], queue['gold']))
+        #play sound if its gold
+        if color[num] == 'gold':
+            playsound('gold.mp3')
         sleep(8)
     else:
         sleep(8)
