@@ -22,6 +22,7 @@ def get_num(text):
         num = num[1]
     else:
         num = num[:2]
+
     return int(num)
 
 
@@ -85,6 +86,40 @@ def update_queue(queue, color):
     return queue
 
 
+def sound_when_color(col):
+    '''
+    plays sound when last roll
+    is given color(col)
+    col - str, one of colors ('black', 'blue' etc)
+    '''
+    if color[num] == col:
+        playsound('get.mp3')
+
+
+def sound_when_2_colors(col1, col2, n, count):
+    '''
+    plays sound when last n rolls
+    are col1 and/or col2
+    
+    col1, col2 - str, one of colors ('black', 'blue' etc)
+    n - int, minimum of rolls with those colors
+    count - int, must be definied before start
+    of crawling as count = 0
+    
+    returns count and must be called as:
+    count = sound_when_2_colors(col1, col2, n, count)
+    '''
+    if color[num] == col1 or color[num] == col2:
+        if count == n - 1:
+            playsound('get.mp3')
+        else:
+            count += 1
+    else:
+        count = 0
+
+    return count
+
+
 #CALL VARIABLES
 url = 'https://csgo500.com'
 xp = "//section[@id='content-game']//div[100]"
@@ -102,6 +137,7 @@ chromeOptions.add_argument('headless')
 chromeOptions.add_argument('log-level=3')
 browser = webdriver.Chrome(chrome_options=chromeOptions)
 browser.get(url)
+count = 0 #for sound_when_2_colors
 while True:
     elem2 = browser.find_element_by_xpath(xp)
     text = elem2.get_attribute("innerHTML")
@@ -115,11 +151,10 @@ while True:
         print(str(num) + ' '*(3-len(str(num))), end='')
         print(color[num] + ' '*(7-len(color[num])), end='')
         print('Rolls since last: black: {}, red: {}, blue: {}, gold: {}'.format(queue['black'], queue['red'], queue['blue'], queue['gold']))
-        #play sound if its gold
-        if color[num] == 'gold':
-            playsound('gold.mp3')
-        sleep(8)
+        sound_when_color('gold')
+        count = sound_when_2_colors('red', 'gold', 2, count)
+        sleep(5)
     else:
-        sleep(8)
+        sleep(5)
 
 browser.close()
