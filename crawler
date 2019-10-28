@@ -9,7 +9,7 @@ import os.path
 import pandas as pd
 from playsound import playsound
 from time import sleep, localtime, strftime, time
-from selenium import webdriver
+from selenium import webdriver, common
 
 
 def get_num(text):
@@ -86,17 +86,18 @@ def update_queue(queue, color):
     return queue
 
 
-def sound_when_color(col):
+def sound_when_color(col, num):
     '''
     plays sound when last roll
     is given color(col)
     col - str, one of colors ('black', 'blue' etc)
     '''
+    color = ['gold','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue']
     if color[num] == col:
         playsound('get.mp3')
 
 
-def sound_when_2_colors(col1, col2, n, count):
+def sound_when_2_colors(col1, col2, n, count, num):
     '''
     plays sound when last n rolls
     are col1 and/or col2
@@ -109,6 +110,8 @@ def sound_when_2_colors(col1, col2, n, count):
     returns count and must be called as:
     count = sound_when_2_colors(col1, col2, n, count)
     '''
+    color = ['gold','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue']
+
     if color[num] == col1 or color[num] == col2:
         if count == n - 1:
             playsound('get.mp3')
@@ -120,41 +123,47 @@ def sound_when_2_colors(col1, col2, n, count):
     return count
 
 
-#CALL VARIABLES
-url = 'https://csgo500.com'
-xp = "//section[@id='content-game']//div[100]"
-hsh = None
-queue = get_queue()
+def main():
+    #CALL VARIABLES
+    url = 'https://csgo500.com'
+    xp = "//section[@id='content-game']//div[100]"
+    hsh = None
+    queue = get_queue()
+    
+    #color - list of colors assigned to numbers
+    #for example - 0 is gold, 1 is blue etc.
+    color = ['gold','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue']
+    #MAIN FUNCTION
+    chromeOptions = webdriver.ChromeOptions()
+    chromeOptions.add_argument('headless')
+    # chromeOptions.add_argument("--disable-logging")
+    chromeOptions.add_argument('log-level=3')
+    browser = webdriver.Chrome(chrome_options=chromeOptions)
+    browser.get(url)
+    count = 0 #for sound_when_2_colors
+    while True:
+        try:
+            elem2 = browser.find_element_by_xpath(xp)
+            text = elem2.get_attribute("innerHTML")
+        except common.exceptions.StaleElementReferenceException:
+            print('ERROR OCCURED')
+            browser.close()
+            print('Restarting browser...')
+            return main()
+        if hsh != text[93:157]:
+            num = get_num(text)
+            hsh = text[93:157]
+            with open('log.txt', 'a') as file:
+                file.write('{};{};{};{}\n'.format(hsh, int(time()), num, color[num]))
+            queue = update_queue(queue, color[num])
+            print(strftime("%Y-%m-%d %H:%M:%S  ", localtime()), end='')
+            print(str(num) + ' '*(3-len(str(num))), end='')
+            print(color[num] + ' '*(7-len(color[num])), end='')
+            print('Rolls since last: black: {}, red: {}, blue: {}, gold: {}'.format(queue['black'], queue['red'], queue['blue'], queue['gold']))
+            # sound_when_color('gold', num)
+            count = sound_when_2_colors('red', 'gold', 3, count, num)
+            sleep(5)
+        else:
+            sleep(5)
 
-#color - list of colors assigned to numbers
-#for example - 0 is gold, 1 is blue etc.
-color = ['gold','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue','black','blue','black','red','black','red','black','red','black','blue']
-
-#MAIN FUNCTION
-chromeOptions = webdriver.ChromeOptions()
-chromeOptions.add_argument('headless')
-# chromeOptions.add_argument("--disable-logging")
-chromeOptions.add_argument('log-level=3')
-browser = webdriver.Chrome(chrome_options=chromeOptions)
-browser.get(url)
-count = 0 #for sound_when_2_colors
-while True:
-    elem2 = browser.find_element_by_xpath(xp)
-    text = elem2.get_attribute("innerHTML")
-    if hsh != text[93:157]:
-        num = get_num(text)
-        hsh = text[93:157]
-        with open('log.txt', 'a') as file:
-            file.write('{};{};{};{}\n'.format(hsh, int(time()), num, color[num]))
-        queue = update_queue(queue, color[num])
-        print(strftime("%Y-%m-%d %H:%M:%S  ", localtime()), end='')
-        print(str(num) + ' '*(3-len(str(num))), end='')
-        print(color[num] + ' '*(7-len(color[num])), end='')
-        print('Rolls since last: black: {}, red: {}, blue: {}, gold: {}'.format(queue['black'], queue['red'], queue['blue'], queue['gold']))
-        sound_when_color('gold')
-        count = sound_when_2_colors('red', 'gold', 2, count)
-        sleep(5)
-    else:
-        sleep(5)
-
-browser.close()
+main()
